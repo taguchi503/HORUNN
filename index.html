@@ -4,15 +4,15 @@
 <meta name="theme-color" content="#176d64"><meta name="description" content="楽譜の写真をよみとって、ホルンの音で練習しよう。">
 <title>ホルンれんしゅう｜写真からおてほんの音</title>
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./style.css?v=0.6.0">
+<link rel="stylesheet" href="./style.css?v=0.6.2">
 </head><body>
-<header class="top"><div class="top-inner"><div class="logo" aria-hidden="true">♫</div><div><h1>ホルンれんしゅう</h1><p>がくふを よんで、おとを きこう</p></div><span class="version">v0.6.0</span></div></header>
+<header class="top"><div class="top-inner"><div class="logo" aria-hidden="true">♫</div><div><h1>ホルンれんしゅう</h1><p>がくふを よんで、おとを きこう</p></div><span class="version">v0.6.2</span></div></header>
 <main>
   <section class="hero" id="mainPanel">
     <div class="hero-note" aria-hidden="true">♬</div>
     <h2>がくふを とって、きいてみよう！</h2>
     <p>1まいでも、なんまいでも えらべるよ。あとから追加もできます。</p>
-    <label class="upload" id="photoLabel"><span class="icon" aria-hidden="true">📷</span><span>がくふを 追加・とる</span><small>写真は複数選択OK・PDFも使えます</small><input id="photo" type="file" accept="image/*,.pdf,application/pdf" multiple aria-label="楽譜の写真を選ぶ"></label>
+    <label class="upload" id="photoLabel"><span class="icon" aria-hidden="true">📷</span><span>がくふを 追加・とる</span><small>写真は複数選択OK・複数写真は自動で1つにまとめます</small><input id="photo" type="file" accept="image/*,.pdf,application/pdf" multiple aria-label="楽譜の写真を選ぶ"></label>
     <p class="file-name" id="filename"></p>
     <img id="photoPreview" class="photo-preview" alt="アップロードした楽譜写真" hidden>
 
@@ -70,8 +70,8 @@
     <div class="review-actions"><button class="secondary" id="refreshResult">なおした音を演奏に反映する</button></div>
   </section>
 
-  <section class="details" id="about"><details><summary>保護者の方へ・ご注意</summary><p>楽譜画像はこの端末内で解析します。初回は無料の読譜エンジン・認識モデルの取得が必要です（約150MB＋実行用ライブラリ）。認識結果は完全ではありません。複雑な楽譜や解像度の低い写真では、必ず原譜を見比べてください。</p><p>複数写真は同時処理せず、1ページずつ順番に読み取ってから1曲として連結します。ページ順は読み取り前に↑↓で変更できます。</p><p>テンポが曲の途中で初めて見つかった場合、冒頭は仮の♩=120として扱います。読譜の精度は保証できないため、毎回読み取り結果を原譜と照合してください。</p><p>読み取り部分にオープンソースのSheetscan / homrを利用しています。外部AIサイトへ楽譜画像をアップロードする形式ではありませんが、認識エンジンの配布元サイトへの接続は必要です。</p><p><a href="https://github.com/dsalex1/sheetscan" target="_blank" rel="noopener noreferrer">認識エンジンのソース（AGPL-3.0）</a> / <a href="./README.txt">このアプリの説明</a></p></details></section>
+  <section class="details" id="about"><details><summary>保護者の方へ・ご注意</summary><p>楽譜画像はこの端末内で解析します。初回は無料の読譜エンジン・認識モデルの取得が必要です（約150MB＋実行用ライブラリ）。認識結果は完全ではありません。複雑な楽譜や解像度の低い写真では、必ず原譜を見比べてください。</p><p>複数写真は端末内で1つの複数ページPDFにまとめ、読譜エンジンへ1回だけ渡します。ページ順は読み取り前に↑↓で変更できます。</p><p>テンポが曲の途中で初めて見つかった場合、冒頭は仮の♩=120として扱います。読譜の精度は保証できないため、毎回読み取り結果を原譜と照合してください。</p><p>読み取り部分にオープンソースのSheetscan / homrを利用しています。外部AIサイトへ楽譜画像をアップロードする形式ではありませんが、認識エンジンの配布元サイトへの接続は必要です。</p><p><a href="https://github.com/dsalex1/sheetscan" target="_blank" rel="noopener noreferrer">認識エンジンのソース（AGPL-3.0）</a> / <a href="./README.txt">このアプリの説明</a></p></details></section>
 </main>
-<footer>ホルンれんしゅう v0.6.0 ・複数ページ対応 ・じっけん版</footer>
-<script type="module" src="./app.js?v=0.6.0"></script>
+<footer>ホルンれんしゅう v0.6.2 ・複数ページ安定化 ・じっけん版</footer>
+<script type="module" src="./app.js?v=0.6.2"></script>
 </body></html>
