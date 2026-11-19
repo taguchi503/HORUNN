@@ -1,4 +1,4 @@
-/* ホルンれんしゅう v0.6.2 / GitHub Pages static-site OMR asset bridge.
+/* ホルンれんしゅう v0.6.3 / GitHub Pages static-site OMR asset bridge.
    The user's score stays in the browser. This worker fetches published *code and
    model files*, not photos, from the upstream public Sheetscan distribution.
    No server-side processing. No GitHub Actions required by the user.

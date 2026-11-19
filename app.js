@@ -1,5 +1,5 @@
-import {readMusicXML} from './musicxml.js?v=0.6.2';
-import {HornSound} from './horn-sound.js?v=0.6.2';
+import {readMusicXML} from './musicxml.js?v=0.6.3';
+import {HornSound} from './horn-sound.js?v=0.6.3';
 
 const $=id=>document.getElementById(id);
 const sound=new HornSound();
@@ -48,12 +48,15 @@ async function init(){
     await navigator.serviceWorker.register(new URL('./sw.js',projectBase),{scope:projectBase.pathname});
     await navigator.serviceWorker.ready;
     if(!navigator.serviceWorker.controller){
-      await new Promise(resolve=>{navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true});setTimeout(resolve,4000);});
+      await new Promise(resolve=>{navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true});setTimeout(resolve,4000)});
     }
-    if(!crossOriginIsolated&&!sessionStorage.getItem('horn-isolation-reload')){
+    // Cross-origin isolation is necessary on Safari without JSPI. A reload
+    // lets our service worker add COOP/COEP to the top-level navigation.
+    if(!crossOriginIsolated && !sessionStorage.getItem('horn-isolation-reload')){
       sessionStorage.setItem('horn-isolation-reload','1');location.reload();return;
     }
-    state.ready=true;status('じゅんび OK！','楽譜を1枚でも、何枚でも選べます。','ok');
+    state.ready=true;
+    status('じゅんび OK！','しゃしんを えらんでね。','ok');
   }catch(e){fail('じゅんびに しっぱいしました',String(e?.message||e));}
 }
 function engineWindow(){return $('engineFrame').contentWindow;}
@@ -80,7 +83,7 @@ async function loadEngine(){
   if(state.engineLoaded){try{if(engineWindow()?.document?.getElementById('files'))return;}catch{}}
   status('がくふを よむ じゅんび','読譜エンジンを読み込んでいます。初回は通信が必要です。','wait',8);
   const frame=$('engineFrame');frame.src=new URL('./_omr/index.html',projectBase).href;
-  const start=performance.now();
+  let start=performance.now();
   while(performance.now()-start<45000){
     await new Promise(r=>setTimeout(r,300));
     try{
@@ -152,7 +155,7 @@ function buildPdfFromJpegs(images){
 }
 async function prepareScanFile(){
   if(!state.pages.length)throw Error('楽譜を選んでください。');
-  if(state.pages.length===1)return {file:state.pages[0].file,lowRes:await pageLowRes(state.pages[0])};
+  if(state.pages.length===1)return {file:state.pages[0].file,lowRes:false};
   if(state.pages.some(p=>!isImageFile(p.file)))throw Error('複数ページでまとめる場合は写真（JPG・PNG・WEBP）を選んでください。PDFは1ファイルで選んでください。');
   if(state.pages.length>12)throw Error('一度にまとめられる写真は12ページまでです。');
   const images=[];let lowRes=false;
@@ -172,9 +175,6 @@ async function pageLowRes(page){
 }
 
 async function scan(file){
-  // v0.6.2: This single-file scan path intentionally follows the v0.5.2
-  // path that was confirmed working on the user's phone. Multi-page support
-  // happens only before this function by bundling photos into one PDF.
   if(!state.ready)throw Error('アプリの準備が終わっていません。');
   if(!file)throw Error('写真を選んでください。');
   if(file.size>30*1024*1024)throw Error('写真が大きすぎます。30MB以下にしてください。');
@@ -207,7 +207,8 @@ async function scan(file){
     const p=parseFloat(doc.getElementById('bar')?.style.width||'0');
     const progress=Number.isFinite(p)&&p>0?Math.min(92,p):35;
 
-    // Same completion rule as v0.5.2: MusicXML ready = scan complete.
+    // v0.5.2: result detection must not depend on the upstream screen name.
+    // Sheetscan may change its body[data-view] while keeping the MusicXML ready.
     const xml=win?.sheetscan?.xml;
     if(typeof xml==='string'&&xml.length>50){state.scanRunning=false;showResult(xml);return;}
 
@@ -273,14 +274,18 @@ async function startBatch(){
 
 function pageStatusText(page){if(page.status==='reading')return '読み取り中…';if(page.status==='done')return '読み取り済み';if(page.status==='error')return 'エラー';return 'まだ読んでいません';}
 function renderPageList(){
-  const box=$('selectedPages'),list=$('pageList');box.hidden=!state.pages.length;list.replaceChildren();
+  const box=$('selectedPages'),list=$('pageList');list.replaceChildren();
   $('pageCount').textContent=state.pages.length?`（${state.pages.length}ページ）`:'';
   $('filename').textContent=state.pages.length===1?state.pages[0].file.name:state.pages.length?`${state.pages.length}ページ 選択中`:'';
   $('scanAllBtn').textContent=state.pages.length>1?'この順で 全部よむ':'この楽譜を よむ';
+  // A single photo follows the v0.5.2 path directly. Do not render another
+  // full-resolution thumbnail; scan() already shows the one preview needed.
+  box.hidden=state.pages.length<=1;
+  if(state.pages.length<=1){setControls(state.scanRunning);return;}
   state.pages.forEach((page,i)=>{
     const card=document.createElement('div');card.className='page-card '+page.status;
     const thumb=document.createElement('div');thumb.className='page-thumb';
-    if(page.previewUrl){const img=document.createElement('img');img.src=page.previewUrl;img.alt=`${i+1}ページ目の写真`;thumb.append(img);}else{const pdf=document.createElement('span');pdf.className='pdf-thumb';pdf.textContent='PDF';thumb.append(pdf);}
+    const mark=document.createElement('span');mark.className='pdf-thumb';mark.textContent=isPdfFile(page.file)?'PDF':'写真';thumb.append(mark);
     const info=document.createElement('div');info.className='page-info';
     const title=document.createElement('strong');title.textContent=`${i+1}ページ目`;
     const name=document.createElement('span');name.textContent=page.file.name;
@@ -301,7 +306,7 @@ function addFiles(files){
     if(file.size>30*1024*1024){errors.push(`${file.name}：30MBを超えています`);continue;}
     if(state.pages.length&&isPdfFile(file)){errors.push(`${file.name}：PDFは単独で選んでください`);continue;}
     if(state.pages.some(p=>isPdfFile(p.file))){errors.push(`${file.name}：PDFと写真は同時にまとめられません`);continue;}
-    const page={id:makeId(),file,previewUrl:isImageFile(file)?URL.createObjectURL(file):null,status:'pending'};
+    const page={id:makeId(),file,previewUrl:null,status:'pending'};
     state.pages.push(page);added++;
   }
   if(added){invalidateResult();renderPageList();}
@@ -338,9 +343,18 @@ function openReview(){reviewShown=true;$('reviewPanel').hidden=false;$('reviewTo
 
 $('photo').addEventListener('change',async e=>{
   const files=[...e.target.files];e.target.value='';const before=state.pages.length,added=addFiles(files);if(!added)return;
-  if(before===0&&state.pages.length===1)await startBatch();
+  if(before===0&&state.pages.length===1){
+    const page=state.pages[0];state.currentFile=page.file;page.status='reading';renderPageList();
+    try{await scan(page.file);page.status='done';renderPageList();}
+    catch(err){page.status='error';fail('がくふを よめませんでした',err?.message||String(err));}
+  }
 });
-$('scanAllBtn').onclick=startBatch;$('retryBtn').onclick=startBatch;$('clearPagesBtn').onclick=clearPages;
+$('scanAllBtn').onclick=startBatch;
+$('retryBtn').onclick=async()=>{
+  if(state.pages.length===1){const page=state.pages[0];state.currentFile=page.file;page.status='reading';renderPageList();try{await scan(page.file);page.status='done';renderPageList();}catch(e){page.status='error';fail('がくふを よめませんでした',e?.message||String(e));}}
+  else await startBatch();
+};
+$('clearPagesBtn').onclick=clearPages;
 $('pageList').onclick=e=>{const b=e.target.closest('button[data-action]');if(!b)return;if(b.dataset.action==='up')movePage(b.dataset.id,-1);else if(b.dataset.action==='down')movePage(b.dataset.id,1);else if(b.dataset.action==='remove')removePage(b.dataset.id);};
 $('playBtn').onclick=startPlayback;$('stopBtn').onclick=stopPlayback;
 $('speed').oninput=()=>{$('speedLabel').textContent=+$('speed').value===100?'ふつう（100%）':`${$('speed').value}%`;};
