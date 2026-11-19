@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#176d64"><meta name="description" content="楽譜の写真をよみとって、ホルンの音で練習しよう。">
+<title>ホルンれんしゅう｜写真からおてほんの音</title>
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./style.css">
+</head><body>
+<header class="top"><div class="top-inner"><div class="logo" aria-hidden="true">♫</div><div><h1>ホルンれんしゅう</h1><p>がくふを よんで、おとを きこう</p></div><span class="version">v0.5.1</span></div></header>
+<main>
+  <section class="hero" id="mainPanel">
+    <div class="hero-note" aria-hidden="true">♬</div>
+    <h2>がくふを とって、きいてみよう！</h2>
+    <p>がっこうの がくふを しゃしんで えらんでね。</p>
+    <label class="upload" id="photoLabel"><span class="icon" aria-hidden="true">📷</span><span>がくふを えらぶ・とる</span><small>しゃしん・PDF が つかえます</small><input id="photo" type="file" accept="image/*,.pdf,application/pdf" aria-label="楽譜の写真を選ぶ"></label>
+    <p class="file-name" id="filename"></p>
+    <img id="photoPreview" class="photo-preview" alt="アップロードした楽譜写真" hidden>
+  </section>
+  <section class="card" id="statusPanel" aria-live="polite">
+    <div class="status-line"><span class="status-dot" id="statusDot"></span><strong id="statusTitle">じゅんびしています…</strong></div>
+    <p id="statusText">アプリをひらいています。</p>
+    <div class="progress" id="progress" hidden><span id="progressFill"></span></div>
+    <button class="secondary" id="retryBtn" hidden>もういちど よみこむ</button>
+  </section>
+  <section class="card" id="resultPanel" hidden>
+    <div class="result-head"><div><span class="smalltag">よみとり けっか</span><h2 id="resultTitle">がくふが よめました</h2><p id="resultMeta"></p></div><span aria-hidden="true" class="result-music">🎼</span></div>
+    <div class="caution" id="caution" hidden></div>
+    <div class="verify" id="verifyBox" hidden>
+      <strong>おんぷを みくらべてから きこう</strong>
+      <p>おとの高さがちがっても、じどうでは かならずしも わかりません。おとなのひとと、しゃしんと よみとった がくふを くらべてね。</p>
+      <button id="openReview" class="secondary" type="button">🎼 よみとった おんぷを たしかめる</button>
+      <label class="confirm"><input id="reviewCheck" type="checkbox"> <span>もとの楽譜と、音符・休符・長さを見比べました</span></label>
+      <button id="allowPlay" class="secondary" type="button" disabled>かくにんした → ホルンで きく</button>
+    </div>
+    <div class="controls">
+      <button class="play" id="playBtn" type="button"><span id="playGlyph">▶</span> <span id="playText">ホルンで きく</span></button>
+      <button class="stop" id="stopBtn" type="button" disabled>■ とめる</button>
+    </div>
+    <div class="now-playing" id="nowPlaying" aria-live="polite">まだ演奏していません</div>
+    <div class="sliders"><label for="speed">はやさ <strong id="speedLabel">ふつう（100%）</strong></label><input type="range" min="40" max="120" step="10" value="100" id="speed"></div>
+    <details class="settings"><summary>れんしゅう せってい</summary><div class="setting-grid">
+      <label>はじめる小節<select id="fromBar"><option value="0">はじめから</option></select></label>
+      <label>くりかえす<select id="repeat"><option value="0">1かい</option><option value="1">おなじところをくりかえす</option></select></label>
+      <label>音の種類<select id="transpose"><option value="-7">F管ホルン（実際の音）</option><option value="0">がくふに書かれた音</option></select></label>
+      <label>冒頭のテンポ（全体を比例調整）<input id="baseBpm" type="number" min="30" max="260" step="1" value="120"></label>
+    </div></details>
+    <button class="review-toggle" id="reviewToggle" type="button" aria-expanded="false">がくふが あっているか たしかめる ▼</button>
+    <p class="footnote">楽譜画像と認識結果の完全な一致は自動判定できません。演奏前に必ず原譜と比較してください。</p>
+  </section>
+  <section class="card review" id="reviewPanel" hidden>
+    <h2>もとの がくふと よみとった がくふ</h2>
+    <p>写真と読み取った楽譜を見比べます。音符をクリックして間違いを直したら「なおした音を演奏に反映する」を押してください。修正後はもう一度確認が必要です。</p>
+    <div class="frame-holder" id="frameHolder"><iframe title="読譜エンジン・楽譜を確認して修正" id="engineFrame" loading="eager"></iframe></div>
+    <div class="review-actions"><button class="secondary" id="refreshResult">なおした音を演奏に反映する</button></div>
+  </section>
+  <section class="details" id="about"><details><summary>保護者の方へ・ご注意</summary><p>楽譜画像はこの端末内で解析します。初回は無料の読譜エンジン・認識モデルの取得が必要です（約150MB＋実行用ライブラリ）。認識結果は完全ではありません。複雑な楽譜や解像度の低い写真では、必ず原譜を見比べてください。</p><p>テンポが曲の途中で初めて見つかった場合、冒頭は仮の♩=120として扱います。読譜の精度は保証できないため、毎回読み取り結果を原譜と照合してください。</p><p>読み取り部分にオープンソースのSheetscan / homrを利用しています。外部AIサイトへ楽譜画像をアップロードする形式ではありませんが、認識エンジンの配布元サイトへの接続は必要です。</p><p><a href="https://github.com/dsalex1/sheetscan" target="_blank" rel="noopener noreferrer">認識エンジンのソース（AGPL-3.0）</a> / <a href="./README.txt">このアプリの説明</a></p></details></section>
+</main>
+<footer>ホルンれんしゅう v0.5.1 ・写真→読譜→ホルン音 ・じっけん版</footer>
+<script type="module" src="./app.js?v=0.5.1"></script>
+</body></html>
